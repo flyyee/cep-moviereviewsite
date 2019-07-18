@@ -1,0 +1,10 @@
+{% extends "nav.html" %}
+{% block body %}
+<b>Search results:</b>
+<section>
+    {% for result in results %}
+    <a href="{{ url_for('catalogue') }}?id={{ result[4] }}">{{ result[1] }}</a><br>
+    {% endfor %}
+</section>
+
+{% endblock %}

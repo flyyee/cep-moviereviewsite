@@ -1,0 +1,78 @@
+{% extends "nav.html" %}
+{% block body %}
+<style>
+#moviediv {
+    display: flex;
+    /* justify-content: space-between; */
+    justify-content: space-evenly;
+}
+/* #movieinfodiv {
+    flex: 1;
+}
+#moviereviewdiv {
+    flex: 1;
+} */
+
+</style>
+
+<br>
+<div id="moviediv">
+<div id="movieinfodiv">
+<section>
+    <b>Movie page for {{ movieinfo[1] }}</b><br>
+    imdb id: {{ movieinfo[4] }}<br>
+    year of release: {{ movieinfo[2] }}<br>
+    runtime: {{ movieinfo[3] }}<br>
+    imdb rating: {{ movieinfo[5] }}<br>
+</section>
+
+<section>
+    <b>OMDB Info:</b><br>
+    <b>Plot: </b> {{ omdbinfo[0] }}<br>
+    <b>Genre: </b> {{ omdbinfo[1] }}<br>
+    <b>Director: </b> {{ omdbinfo[2] }}<br>
+    <b>Actors: </b> {{ omdbinfo[3] }}<br>
+    <b>Poster: </b><br> <img src="{{ omdbinfo[4] }}"><br>
+</section>
+</div>
+
+<div id="moviereviewdiv">
+<section>
+    {% if loggedin %}
+    {% if reviewed %}
+    You have already written a review for this movie. <br>
+    {% else %}
+
+    <form action="{{ url_for('submitreview') }}?id={{ movieinfo[4] }}" method="post">
+        Your review: <input type="text" name="review" required><br>
+        <input type="range" min="0" max="100" value="0" id="reviewrange" required>
+        <div id="reviewrangevaluevisible"></div>
+        <input type="text" name="reviewrangevalue" id="reviewrangevalue" value="0.0" hidden><br>
+        <button>Submit</button>
+    </form>
+    {% endif %}
+    {% else %}
+    You are not logged in. Log in to write a review.<br>
+    {% endif %}
+    <b>User reviews:</b><br>
+    {% for review in reviews %}
+    <b>{{ review[2] }}</b> said:<br>
+    {{ review[3] }} <br>
+    <b>Score:</b> {{ review[4] }} <br>
+    {% endfor %}
+</section>
+</div>
+</div>
+
+<script>
+    let slider = document.getElementById("reviewrange")
+    let slidervaluevisible = document.getElementById("reviewrangevaluevisible")
+    let slidervalue = document.getElementById("reviewrangevalue")
+    slidervaluevisible.innerHTML = "0.0"
+    slidervalue.value = "0.0"
+    slider.oninput = () => {
+        slidervaluevisible.innerHTML = slider.value / 10.0
+        slidervalue.value = slider.value / 10.0
+    }
+</script>
+{% endblock %}
