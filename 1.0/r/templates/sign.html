@@ -11,7 +11,7 @@
         justify-content: space-between;
     }
 
-    #homepage {
+    header a {
         font-family: 'Ubuntu', sans-serif;
         font-size: 80px;
         padding: none;
@@ -19,13 +19,13 @@
         color: white;
     }
 
-    header>form {
+    form {
         font-family: 'Roboto Slab', serif;
         font-size: 18px;
         color: white;
     }
 
-    header input {
+    input {
         font-size: 16px;
         padding: 1px;
         background: lightpink;
@@ -37,7 +37,7 @@
         font-family: monospace;
     }
 
-    header #loginbutton {
+    body #signbutton {
         color: white;
         background: none;
         border-radius: 0px;
@@ -46,7 +46,7 @@
         font-family: 'Roboto Slab', serif;
     }
 
-    header #loginbutton:hover {
+    body #signbutton:hover {
         border-style: dotted;
     }
 
@@ -67,13 +67,13 @@
         text-align: center;
     }
 
-    #signupbar {
-        display: flex;
-        justify-content: space-between;
+    body b {
+        font-family: 'Roboto Slab', serif;
+        font-size: 40px;
+        color: #FFDC00;
     }
 
-    #signupbar a {
-        font-size: 12px;
+    body a {
         color: white;
     }
 </style>
@@ -82,31 +82,22 @@
     <link href="https://fonts.googleapis.com/css?family=PT+Sans|Roboto+Slab|Ubuntu&display=swap" rel="stylesheet">
     <title>movie thing</title>
     <section>
-        <a id="homepage" href="{{ url_for('index') }}">Moviez</a><br>
+        <a href="{{ url_for('index') }}">Moviez</a><br>
         <form action="{{ url_for('search') }}" method="post">
             <input type="text" name="query" placeholder="search">
             <button id="searchbutton">&#x1F50E;</button>
         </form>
     </section>
-    {% if loggedin %}
-    <span id="signupbar">
-        <a id="logout" href="{{ url_for('logout') }}">Log out</a>
-    </span>
-    {% else %}
-    <form action="{{ url_for('login') }}" method="post">
+    <!-- <form action="{{ url_for('login') }}" method="post">
         Username: <input type="text" name="username"><br>
         Password: <input type="password" name="password"><br>
-        <span id="signupbar">
-            <a href="{{ url_for('signup') }}">Sign up</a>
-            <button id="loginbutton">Log in</button>
-        </span>
-    </form>
-    {% endif %}
+        <a href="{{ url_for('signup') }}">Sign up</a>
+        <button id="signbutton">Submit</button>
+    </form> -->
 </header>
 
 <body>
     {% block body %}
     {% endblock %}
 </body>
-
 </html>

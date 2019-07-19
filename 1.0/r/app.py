@@ -5,6 +5,7 @@ from flask_session import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 import requests
+from hashlib import sha256
 
 app = Flask(__name__)
 
@@ -33,26 +34,56 @@ db = scoped_session(sessionmaker(bind=engine))
 def login():
     return render_template("login.html")
 
+@app.route("/signup", methods=["GET"])
+def signup():
+    signinfo = False
+    if request.args.get('signinfo') == "badusername":
+        signinfo = True
+    return render_template("signup.html", signinfo=signinfo)
+
+@app.route("/signup", methods=["POST"])
+def createuser():
+    username = request.form.get("username")
+    password = sha256(request.form.get("password").encode()).hexdigest()
+    res = db.execute("SELECT id FROM userstest1 WHERE username = '" + username + "'").fetchall()
+    if res:  #not empty
+        return redirect("/signup?signinfo=badusername")
+    
+    res = db.execute("INSERT INTO userstest1 (username, password) VALUES (:username, :password)", {
+                     "username": username, "password": password})
+    res = db.commit()
+    return redirect("/?success=true")
+
 
 @app.route("/login", methods=["POST"])
 def checklogin():
     username = request.form.get("username")
-    password = request.form.get("password")
-    if username == "john" and password == "john":
-        session["who"] = "coolandgood"
-        return redirect("site")
-        # return render_template("site.html", username=username)
-
+    password = sha256(request.form.get("password").encode()).hexdigest()
+    
+    res = db.execute("SELECT password FROM userstest1 WHERE username = '" + username + "' AND password = '" + password + "'").fetchall()
+    if res:
+        session["who"] = password
+        return redirect("/?success=true")
     else:
-        return render_template("login.html")
+        session["who"] = "notset"
+        return render_template("login.html", signinfo=True)
 
+@app.route("/logout", methods=["GET"])
+def logout():
+    session["who"] = "notset"
+    return redirect("/")
 
 @app.route("/")
 def index():
-    # if "who" not in session or session["who"] != "coolandgood":
-    #     return redirect("login")
-    session["who"] = "notset"
-    return render_template("site.html")
+    success = False
+    if request.args.get('success') == "true":
+        success = True
+    loggedin = False
+    if "who" not in session:
+        session["who"] = "notset"
+    elif session["who"] != "notset":
+        loggedin = True
+    return render_template("site.html", success=success, loggedin=loggedin)
 
 
 @app.route("/search", methods=["GET", "POST"])
@@ -83,8 +114,12 @@ def search():
                 print("Found result for query: ")
                 print(item)
                 matches.append(item)
+    
+    loggedin = False
+    if session["who"] != "notset":
+        loggedin = True
 
-    return render_template("search.html", results=matches)
+    return render_template("search.html", results=matches, loggedin=loggedin)
 
 
 @app.route("/catalogue")
@@ -92,23 +127,33 @@ def catalogue():
     if request.args.get('id')[0:2] == "tt":
         myimdbid = request.args.get('id')
         myusername = session["who"]
-        movieinfo = db.execute("SELECT * FROM moviestest1 WHERE imdbid = '" + myimdbid + "'").fetchall()
+        movieinfo = db.execute(
+            "SELECT * FROM moviestest1 WHERE imdbid = '" + myimdbid + "'").fetchall()
         print("successful call")
         print(movieinfo)
         if movieinfo:  # not empty
-            if "who" not in session or session["who"] != "coolandgood":
-                loggedin = False
-            else:
-                loggedin = True
-            reviews = db.execute("SELECT * FROM reviewstest2 WHERE imdbid = '" + myimdbid + "'").fetchall()
-            
+            loggedin = False
+            if "who" in session:
+                if session["who"] != "notset":
+                    usernames = db.execute(
+            "SELECT username FROM userstest1 WHERE password = '" + session["who"] + "'").fetchall()
+                    if usernames:
+                        myusername = usernames[0][0]
+                        loggedin = True
+
+            reviews = db.execute(
+                "SELECT * FROM reviewstest2 WHERE imdbid = '" + myimdbid + "'").fetchall()
+
             reviewed = False
+            print(myusername)
             for review in reviews:
+                print(review[2])
                 if review[2] == myusername:
                     reviewed = True
                     break
 
-            res = requests.get("http://www.omdbapi.com/?apikey=36a5b700&i=" + myimdbid)
+            res = requests.get(
+                "http://www.omdbapi.com/?apikey=36a5b700&i=" + myimdbid)
             omdbinfo = []
             if "Plot" in res.json():
                 omdbinfo.append(res.json()["Plot"])
@@ -129,8 +174,8 @@ def catalogue():
             if "Poster" in res.json():
                 omdbinfo.append(res.json()["Poster"])
             else:
-                omdbinfo.append("https://upload.wikimedia.org/wikipedia/en/d/d1/Image_not_available.png")   
-            
+                omdbinfo.append(
+                    "https://upload.wikimedia.org/wikipedia/en/d/d1/Image_not_available.png")
 
             # reviewed = db.execute("SELECT * FROM reviewstest2 WHERE username = '" + myusername + "'").fetchall()
             # reviewed = bool(reviewed) #if empty = false
@@ -139,14 +184,18 @@ def catalogue():
             return redirect("/site")
     return redirect("/site")
 
+
 @app.route("/submitreview", methods=["POST"])
 def submitreview():
     id = request.args.get("id")
     score = request.form.get("reviewrangevalue")
     print(score)
     review = request.form.get("review")
-    user = session["who"]
-    res = db.execute("INSERT INTO reviewstest2 (imdbid, username, review, score) VALUES (:imdbid, :username, :review, :score)", {"imdbid": id, "username": user, "review": review, "score": score})
+    usernames = db.execute(
+            "SELECT username FROM userstest1 WHERE password = '" + session["who"] + "'").fetchall()
+    user = usernames[0][0]
+    res = db.execute("INSERT INTO reviewstest2 (imdbid, username, review, score) VALUES (:imdbid, :username, :review, :score)", {
+                     "imdbid": id, "username": user, "review": review, "score": score})
     res = db.commit()
     return redirect("/catalogue?id=" + id)
 
@@ -156,9 +205,11 @@ def hello():
     name = request.form.get("name")
     return render_template("hello.html", name=name)
 
+
 @app.route("/api/<imdbid>", methods=["GET"])
 def api(imdbid):
-    res = db.execute("SELECT * FROM moviestest1 WHERE imdbid = '" + imdbid + "'").fetchall()
+    res = db.execute(
+        "SELECT * FROM moviestest1 WHERE imdbid = '" + imdbid + "'").fetchall()
     if not res:
         # return abort(404)
         return render_template("404.html", object="Movie")
@@ -186,8 +237,9 @@ def api(imdbid):
     if "imdbRating" in res.json():
         info["imdb_rating"] = res.json()["imdbRating"]
 
-    scores = db.execute("SELECT score FROM reviewstest2 WHERE imdbid = '" + imdbid + "'").fetchall()
-    
+    scores = db.execute(
+        "SELECT score FROM reviewstest2 WHERE imdbid = '" + imdbid + "'").fetchall()
+
     info["review_count"] = len(scores)
 
     # print(scores)

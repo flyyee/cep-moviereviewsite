@@ -11,7 +11,7 @@
         justify-content: space-between;
     }
 
-    header a {
+    #homepage {
         font-family: 'Ubuntu', sans-serif;
         font-size: 80px;
         padding: none;
@@ -42,7 +42,7 @@
         background: none;
         border-radius: 0px;
         border-style: dashed;
-        margin-left: 75%;
+        /* margin-left: 75%; */
         font-family: 'Roboto Slab', serif;
     }
 
@@ -90,21 +90,42 @@
     #searchbutton:hover {
         border-style: dotted;
     }
+
+    #signupbar {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    #signupbar a {
+        font-size: 12px;
+        color: white;
+    }
 </style>
 
 <header>
     <link href="https://fonts.googleapis.com/css?family=PT+Sans|Roboto+Slab|Ubuntu&display=swap" rel="stylesheet">
     <title>movie thing</title>
-    <a href="{{ url_for('index') }}">Moviez</a>
-    <form action="{{ url_for('login') }}" method="post" autocomplete="off">
+    <a id="homepage" href="{{ url_for('index') }}">Moviez</a>
+    {% if loggedin %}
+    <span id="signupbar">
+        <a id="logout" href="{{ url_for('logout') }}">Log out</a>
+    </span>
+    {% else %}
+    <form action="{{ url_for('login') }}" method="post">
         Username: <input type="text" name="username"><br>
         Password: <input type="password" name="password"><br>
-        <button>Submit</button>
+        <span id="signupbar">
+            <a href="{{ url_for('signup') }}">Sign up</a>
+            <button id="loginbutton">Log in</button>
+        </span>
     </form>
+    {% endif %}
 </header>
 
 <body>
-    <!-- <b>SEARCH:</b> -->
+    {% if success %}
+    <script>alert("Success!")</script>
+    {% endif %}
     <form action="{{ url_for('search') }}" method="post" autocomplete="off">
         <input type="text" name="query" id="searchbox"><br>
         <button id="searchbutton">Search</button>
