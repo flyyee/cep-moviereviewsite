@@ -1,9 +1,25 @@
 {% extends "nav.html" %}
 {% block body %}
-<b>Search results:</b>
+<style>
+    body > b {
+        color: white;
+        font-family: 'Roboto Slab', serif;
+        font-size: 20px;
+    }
+    .movielink {
+        padding: 10px;
+        font-size: 30px;
+        border: 1px solid yellow;
+        border-radius: 15px;
+        color: lightpink;
+        text-decoration: none;
+    }
+</style>
+
+<b><u>Search results:</u></b>
 <section>
     {% for result in results %}
-    <a href="{{ url_for('catalogue') }}?id={{ result[4] }}">{{ result[1] }}</a><br>
+    <br><a class="movielink" href="{{ url_for('catalogue') }}?id={{ result[4] }}">{{ result[1] }}</a><br>
     {% endfor %}
 </section>
 
