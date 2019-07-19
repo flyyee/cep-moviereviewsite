@@ -15,6 +15,11 @@
         color: lightpink;
         text-decoration: none;
     }
+
+    .nonefound {
+        font-size: 24px;
+        color: #FFDC00;
+    }
 </style>
 
 <b><u>Search results:</u></b>
@@ -22,6 +27,9 @@
     {% for result in results %}
     <br><a class="movielink" href="{{ url_for('catalogue') }}?id={{ result[4] }}">{{ result[1] }}</a><br>
     {% endfor %}
+    {% if nomatches %}
+    <span class="nonefound">No results found.</span>
+    {% endif %}
 </section>
 
 {% endblock %}

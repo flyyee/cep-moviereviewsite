@@ -62,7 +62,7 @@ def checklogin():
     
     res = db.execute("SELECT password FROM userstest1 WHERE username = '" + username + "' AND password = '" + password + "'").fetchall()
     if res:
-        session["who"] = password
+        session["who"] = [username, password]
         return redirect("/?success=true")
     else:
         session["who"] = "notset"
@@ -96,37 +96,44 @@ def search():
     if query[0:2] == "tt":
         print("query is a imdbid")
         for item in movies:
-            if item[4] == query:
+            if query in item[4]:
                 print("Found result for query: ")
                 print(item)
                 matches.append(item)
     elif all(char in '1234567890' for char in query):
         print("query is a year")
         for item in movies:
-            if item[2] == query:
+            if query in item[2]:
                 print("Found result for query: ")
                 print(item)
                 matches.append(item)
     else:
         print("query is a movie title")
         for item in movies:
-            if item[1] == query:
+            if query.lower() in item[1].lower():
                 print("Found result for query: ")
                 print(item)
                 matches.append(item)
-    
+            
+    nomatches = not bool(matches)
+
     loggedin = False
+    if "who" not in session:
+        session["who"] = "notset"
     if session["who"] != "notset":
         loggedin = True
 
-    return render_template("search.html", results=matches, loggedin=loggedin)
+    return render_template("search.html", results=matches, loggedin=loggedin, nomatches=nomatches)
 
 
 @app.route("/catalogue")
 def catalogue():
     if request.args.get('id')[0:2] == "tt":
         myimdbid = request.args.get('id')
-        myusername = session["who"]
+        if "who" not in session:
+            session["who"] = "notset"
+        myusername = session["who"][0]
+        mypassword = session["who"][1]
         movieinfo = db.execute(
             "SELECT * FROM moviestest1 WHERE imdbid = '" + myimdbid + "'").fetchall()
         print("successful call")
@@ -136,7 +143,7 @@ def catalogue():
             if "who" in session:
                 if session["who"] != "notset":
                     usernames = db.execute(
-            "SELECT username FROM userstest1 WHERE password = '" + session["who"] + "'").fetchall()
+            "SELECT username FROM userstest1 WHERE password = '" + mypassword + "' AND username = '" + myusername + "'").fetchall()
                     if usernames:
                         myusername = usernames[0][0]
                         loggedin = True
@@ -191,8 +198,10 @@ def submitreview():
     score = request.form.get("reviewrangevalue")
     print(score)
     review = request.form.get("review")
+    if "who" not in session:
+        session["who"] = "notset"
     usernames = db.execute(
-            "SELECT username FROM userstest1 WHERE password = '" + session["who"] + "'").fetchall()
+            "SELECT username FROM userstest1 WHERE password = '" + session["who"][1] + "' AND username = '" + session["who"][0] + "'").fetchall()
     user = usernames[0][0]
     res = db.execute("INSERT INTO reviewstest2 (imdbid, username, review, score) VALUES (:imdbid, :username, :review, :score)", {
                      "imdbid": id, "username": user, "review": review, "score": score})

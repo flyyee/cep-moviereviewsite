@@ -102,7 +102,7 @@
             </form>
             {% endif %}
             {% else %}
-            You are not logged in. Log in to write a review.<br>
+            You are not logged in. <a href="{{ url_for('login') }}" style="color: white;">Log in</a> to write a review.<br>
             {% endif %}
             <b>User reviews:</b><br>
             {% for review in reviews %}
